@@ -94,6 +94,43 @@ def train(model, train_loader, test_loader, criterion, optimizer, scheduler):
                 break
 
 
+def evaluate(model,)
+    checkpoint_path = 'checkpoint.pth'
+    checkpoint = torch.load(checkpoint_path)
+    model.load_state_dict(checkpoint['model_state_dict'])
+
+    # Evaluation
+    model.eval()
+
+    # Evaluation in batches
+    y_pred = []
+
+    with torch.no_grad():
+        for i in range(0, len(X_test_tensor), batch_size):
+            # Get batch and move to GPU
+            batch = X_test_tensor[i:i+batch_size].to(device)
+            
+            # Predict and move to CPU
+            pred = model(batch).cpu().numpy()
+            y_pred.append(pred)
+            
+            # Free GPU memory
+            del batch, pred
+            torch.cuda.empty_cache()
+
+    # Combine all batches
+    y_pred = np.concatenate(y_pred, axis=0)
+
+    # Inverse transform predictions
+    # y_pred = scaler_y.inverse_transform(y_pred)
+    # y_test_actual = scaler_y.inverse_transform(y_train.squeeze(1))
+
+    # Calculate metrics
+    mse = mean_squared_error(y_test.squeeze(1), y_pred)
+    mae = mean_absolute_error(y_test.squeeze(1), y_pred)
+    print(f"Test MSE: {mse:.4f}")
+    print(f"Test MAE: {mae:.4f}")
+
 def main():
     # Load Dataset
     df = pd.read_csv("/home/bisnu-sarkar/Deep_learning_projects/Electric-Power-Consumption/data/preprocessed_data.csv")
@@ -149,6 +186,9 @@ def main():
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5)
 
     train(model, train_loader, test_loader, criterion, optimizer, scheduler)
+
+    # Evaluation
+    evaluate(model, X_test_tensor, y_test_tensor)
 
 if __name__ == "__main__":
     main()
